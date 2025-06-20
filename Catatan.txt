@@ -1,9 +1,5 @@
-Menit 03:53:00
 
-1. coba ganti database ke online lagi ✔️
-	- masalahnya jaringan internet
-
-#USER
+#USER TEST
 arthur@mail.com
 123456
 
@@ -32,13 +28,3 @@ FITUR READ :
 
 4. Kirm file ✔️
 5. Download File dengan nama dan ektensi sesuai
-
-CHAT GPT
-Kalau kamu butuh bantu:
-
-bikin preview pesan terakhir,
-
-tambah badge notifikasi real-time dengan Socket.IO,
-
-atau buat fitur seperti "pesan terakhir di-pin",
-langsung aja bilang — siap bantu sampai jadi kaya WhatsApp 🚀
