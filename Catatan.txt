@@ -1,0 +1,44 @@
+Menit 03:53:00
+
+1. coba ganti database ke online lagi ✔️
+	- masalahnya jaringan internet
+
+#USER
+arthur@mail.com
+123456
+
+iwan@mail.com
+123456
+
+#LOCAL DB
+run db : mongod --dbpath="c:\data\db"
+
+open shell run : mongosh
+command :
+show dbs
+use nama_database
+
+lihat semua data di table users : db.users.find()
+
+
+FITUR READ :
+1. centang biru setelah di baca ✔️
+	bisa tapi trigger update read di panggil jika user mengklik user,
+	kondisi user sedang membuka pesan pengirim otomatis jadi biru belum ditemukan caranya
+
+2. setelah pesan di buka kemudian di close, getUnreadMessage dan badge unread tidak muncul lagi, harus di refresh dulu baru muncul ✔️
+
+3. Notifikasi & suara pesan baru ✔️
+
+4. Kirm file ✔️
+5. Download File dengan nama dan ektensi sesuai
+
+CHAT GPT
+Kalau kamu butuh bantu:
+
+bikin preview pesan terakhir,
+
+tambah badge notifikasi real-time dengan Socket.IO,
+
+atau buat fitur seperti "pesan terakhir di-pin",
+langsung aja bilang — siap bantu sampai jadi kaya WhatsApp 🚀
