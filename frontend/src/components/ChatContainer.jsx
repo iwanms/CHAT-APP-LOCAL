@@ -5,6 +5,7 @@ import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import { useAuthStore } from "../store/useAuthStore";
 import { formatMessageTime } from "../lib/utils";
+import { FileText } from "lucide-react";
 
 const ChatContainer = () => {
   const {
@@ -25,10 +26,6 @@ const ChatContainer = () => {
 
   useEffect(() => {
     getMessages(selectedUser._id);
-
-    // subscribeToMessages();
-
-    // return () => unsubscribeFromMessages();
   }, [
     selectedUser._id,
     getMessages,
@@ -42,9 +39,8 @@ const ChatContainer = () => {
     }
   }, [messages]);
 
-  // Add debug logging to monitor messages changes
   useEffect(() => {
-    // console.log("Messages updated:", messages);
+    console.log("Messages updated:", messages);
   }, [messages]);
 
   if (isMessagesLoading)
@@ -110,7 +106,7 @@ const ChatContainer = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <embed
-              src={previewPdf}
+              src={`/api/messages/preview/${previewPdf}`}
               type="application/pdf"
               className="max-h-[80vh] max-w-[90vw] rounded mb-4"
             />
@@ -207,31 +203,9 @@ const ChatContainer = () => {
                     href={`/api/messages/download/${message._id}`}
                     className="flex items-center text-blue-600 hover:text-blue-800 underline gap-1"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828L18 9.828M7 17h.01"
-                      />
-                    </svg>
+                    <FileText className="h-5 w-5" />
                     <span>{message.fileName || "Download File"}</span>
                   </a>
-                  {message.fileName &&
-                    message.fileName.toLowerCase().endsWith(".pdf") && (
-                      <button
-                        className="ml-2 px-2 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300 border border-gray-300"
-                        onClick={() => setPreviewPdf(message.file)}
-                      >
-                        Preview PDF
-                      </button>
-                    )}
                 </div>
               )}
               {message.text && (

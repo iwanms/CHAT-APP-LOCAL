@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import toast from "react-hot-toast";
 import { axiosInstance } from "../lib/axios";
-// import { getMessages } from "../../../backend/src/controllers/message.controller";
 import { useAuthStore } from "./useAuthStore";
 
 export const useChatStore = create((set, get) => ({
@@ -10,6 +9,8 @@ export const useChatStore = create((set, get) => ({
   selectedUser: null,
   isUsersLoading: false,
   isMessageLoading: false,
+  popupMessage: null,
+  lastMessages: {},
 
   getUsers: async () => {
     set({ isUsersLoading: true });
@@ -37,9 +38,6 @@ export const useChatStore = create((set, get) => ({
 
   sendMessage: async (messageData) => {
     const { selectedUser, messages } = get();
-    // console.log("selectedUser : " + selectedUser);
-    // console.log("messages : " + messages);
-    // console.log("messageData : " + messageData);
 
     try {
       const res = await axiosInstance.post(
@@ -64,9 +62,7 @@ export const useChatStore = create((set, get) => ({
     socket.off("newMessage");
     socket.off("messagesRead");
 
-    socket.on("newMessage", (newMessage) => {
-      // console.log("📥 New message received:", newMessage);
-
+    socket.on("newMessage", async (newMessage) => {
       try {
         const audio = new window.Audio("/notif.mp3");
         audio.play();
@@ -74,19 +70,30 @@ export const useChatStore = create((set, get) => ({
         console.error("Error playing notification sound:", error);
       }
 
-      const { selectedUser, messages, updateRead, getMessages, unreadCounts } =
-        get();
-
-      // console.log("SELECTED USER : " + selectedUser);
+      const {
+        selectedUser,
+        messages,
+        updateRead,
+        getMessages,
+        unreadCounts,
+        users,
+      } = get();
 
       if (selectedUser && selectedUser._id === newMessage.senderId) {
         set({ messages: [...messages, newMessage] });
         updateRead(selectedUser);
         getMessages(selectedUser._id);
       } else {
+        const senderUser = users.find((u) => u._id === newMessage.senderId);
+        set({
+          popupMessage: {
+            ...newMessage,
+            senderName: senderUser?.fullName || "Pesan Baru",
+            profilePic: senderUser?.profilePic || "/avatar.png",
+          },
+        });
         if (!selectedUser) {
-          // console.log("📭 No selectedUser, fetch fresh unreadCounts...");
-          get().getUnreadCounts(); // tambahkan ini
+          get().getUnreadCounts();
         } else {
           set((state) => {
             const unread = {
@@ -95,11 +102,13 @@ export const useChatStore = create((set, get) => ({
                 (state.unreadCounts[newMessage.senderId] || 0) + 1,
             };
 
-            // console.log("🔴 Update unreadCounts:", unread);
-
             return { unreadCounts: unread };
           });
         }
+      }
+
+      if (get().getLastMessages) {
+        await get().getLastMessages();
       }
     });
 
@@ -118,15 +127,12 @@ export const useChatStore = create((set, get) => ({
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
     if (socket) {
-      // console.log("UNSUBSCRIBE MESSAGES");
       socket.off("newMessage");
       socket.off("messagesRead");
     }
   },
 
   setSelectedUser: async (selectedUser) => {
-    // console.log("selected user awal refresh : " + selectedUser);
-
     set({ selectedUser });
     if (selectedUser?._id) {
       try {
@@ -143,23 +149,16 @@ export const useChatStore = create((set, get) => ({
         );
       }
     } else {
-      // console.log("set selected user null get lagi unread message");
-      // Panggil getUnreadCounts kembali ketika selectedUser diatur menjadi null
       await get().getUnreadCounts();
-      // set((state) => ({ rerender: !state.rerender }));
     }
   },
 
-  // useChatStore.js
   updateRead: async (selectedUser) => {
     try {
       if (selectedUser?._id) {
         await axiosInstance.post(`/messages/read/${selectedUser._id}`, {
           read: 1,
         });
-        // Tidak perlu update state messages atau unreadCounts di sini.
-        // State messages sudah diupdate oleh socket event "messagesRead".
-        // unreadCounts direset di setSelectedUser setelah updateRead berhasil.
       }
     } catch (error) {
       toast.error(
@@ -171,19 +170,28 @@ export const useChatStore = create((set, get) => ({
   unreadCounts: {},
   getUnreadCounts: async () => {
     try {
-      // console.log("🔄 Fetching unread counts...");
       const res = await axiosInstance.get("/messages/unread/counts");
-      // console.log("✅ Unread counts response:", res.data);
       const countsMap = {};
       res.data.forEach((entry) => {
         countsMap[entry._id] = entry.count;
-        // console.log(`   👤 User ID: ${entry._id}, Count: ${entry.count}`);
       });
       set({ unreadCounts: countsMap });
-      // console.log("🔴 Updated unreadCounts in store:", get().unreadCounts);
     } catch (error) {
       console.error("❌ Failed to load unread messages:", error);
       toast.error("Failed to load unread messages");
+    }
+  },
+
+  getLastMessages: async () => {
+    try {
+      const res = await axiosInstance.get("/messages/last-messages");
+      const lastMessagesMap = {};
+      res.data.forEach((msg) => {
+        lastMessagesMap[msg.userId] = msg;
+      });
+      set({ lastMessages: lastMessagesMap });
+    } catch (error) {
+      toast.error("Failed to load last chat snippet");
     }
   },
 }));

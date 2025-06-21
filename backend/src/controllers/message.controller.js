@@ -84,7 +84,6 @@ export const sendMessage = async (req, res) => {
   }
 };
 
-// message.controller.js
 export const updateRead = async (req, res) => {
   try {
     const { id: receiverId } = req.params;
@@ -172,18 +171,6 @@ export const getUnreadCounts = async (req, res) => {
   }
 };
 
-// export const deleteManyMessages = async (req, res) => {
-//   try {
-//     const result = await Message.deleteMany({});
-//   } catch (error) {
-//     console.log(
-//       "Error in func deleteManyMessages message.controller: ",
-//       error.message
-//     );
-//     res.status(500).json({ error: "Internal server error" });
-//   }
-// };
-
 // Proxy download endpoint
 export const proxyDownload = async (req, res) => {
   try {
@@ -206,6 +193,60 @@ export const proxyDownload = async (req, res) => {
     response.data.pipe(res);
   } catch (error) {
     console.error("Proxy download error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const previewPdf = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const message = await Message.findById(messageId);
+    if (!message || !message.file) {
+      return res.status(404).json({ error: "File not found" });
+    }
+    const fileUrl = message.file;
+    const fileName = message.fileName || "file.pdf";
+    const response = await axios.get(fileUrl, { responseType: "stream" });
+    res.setHeader("Content-Disposition", `inline; filename=\"${fileName}\"`);
+    res.setHeader(
+      "Content-Type",
+      response.headers["content-type"] || "application/pdf"
+    );
+    response.data.pipe(res);
+  } catch (error) {
+    console.error("Preview PDF error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getLastMessagesForSidebar = async (req, res) => {
+  try {
+    const myId = req.user._id;
+    const lastMessages = await Message.aggregate([
+      {
+        $match: {
+          $or: [{ senderId: myId }, { receiverId: myId }],
+        },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $group: {
+          _id: {
+            $cond: [{ $eq: ["$senderId", myId] }, "$receiverId", "$senderId"],
+          },
+          doc: { $first: "$$ROOT" },
+        },
+      },
+      {
+        $replaceRoot: {
+          newRoot: { $mergeObjects: ["$doc", { userId: "$_id" }] },
+        },
+      },
+    ]);
+    res.status(200).json(lastMessages);
+  } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
 };

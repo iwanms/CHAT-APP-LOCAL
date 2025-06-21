@@ -27,4 +27,7 @@ FITUR READ :
 3. Notifikasi & suara pesan baru ✔️
 
 4. Kirm file ✔️
-5. Download File dengan nama dan ektensi sesuai
+5. Download File dengan nama dan ektensi sesuai ✔️
+6. Preview PDF
+7. Popup New Messagge
+8. tampilkan potongan new message di foto profile
